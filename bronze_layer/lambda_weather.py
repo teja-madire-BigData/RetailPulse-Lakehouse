@@ -6,10 +6,10 @@ from datetime import datetime, timezone
 
 
 # Set this in Lambda environment variables
-REGION = os.environ['AWS_REGION']
+REGION = os.environ['REGION']
 STREAM_NAME = os.environ["FIREHOSE_STREAM_NAME"]
 
-firehose = boto3.client("firehose", region_name="ap-south-2")
+firehose = boto3.client("firehose", region_name=REGION)
 
 # City definitions
 # latitude/longitude match Open-Meteo's coordinate-based API

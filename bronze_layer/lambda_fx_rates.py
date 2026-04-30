@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 # Set this in Lambda environment variables
 API_KEY = os.environ["EXCHANGERATE_API_KEY"]
 STREAM_NAME = os.environ["FIREHOSE_STREAM_NAME"]
-REGION = os.environ['AWS_REGION']
+REGION = os.environ['REGION']
 
 firehose = boto3.client("firehose", region_name=REGION)
 

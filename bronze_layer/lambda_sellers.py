@@ -10,7 +10,7 @@ from shared_config import (
 )
 
 # Set this in Lambda environment variables
-REGION = os.environ['AWS_REGION']
+REGION = os.environ['REGION']
 STREAM_NAME = os.environ["FIREHOSE_STREAM_NAME"]
 
 firehose = boto3.client("firehose", region_name=REGION)
@@ -38,16 +38,15 @@ COMMISSION_RATES = {
     "Toys": 0.11,
 }
 
-
+REFERENCE_DATE = datetime(2026, 1, 1, tzinfo=timezone.utc)
 def build_seller_catalogue(fake) -> list[dict]:
     sellers = []
     rng = random.Random(CATALOGUE_SEED)
-    now = datetime.now(timezone.utc)
 
     for i in range(1, NUM_SELLERS + 1):
         category = rng.choice(CATEGORY_NAMES)
         days_ago = rng.randint(90, 5 * 365)
-        joined_at = now - timedelta(days=days_ago)
+        joined_at = REFERENCE_DATE - timedelta(days=days_ago)
         country = rng.choices(COUNTRIES, weights=COUNTRY_WEIGHTS, k=1)[0]
 
         sellers.append({
@@ -65,7 +64,6 @@ def build_seller_catalogue(fake) -> list[dict]:
 
 
 def simulate_seller_state(seller: dict) -> dict:
-    now = datetime.now(timezone.utc)
 
     # Rating drifts between 3.0 and 5.0
     seller_rating = round(random.uniform(3.0, 5.0), 1)

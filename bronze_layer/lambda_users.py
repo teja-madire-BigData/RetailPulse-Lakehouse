@@ -12,7 +12,7 @@ from shared_config import (
 )
 
 # Set this in Lambda environment variables
-REGION = os.environ['AWS_REGION']
+REGION = os.environ['REGION']
 STREAM_NAME = os.environ["FIREHOSE_STREAM_NAME"]
 
 firehose = boto3.client("firehose", region_name=REGION)
@@ -145,15 +145,17 @@ def simulate_user_state(user: dict) -> dict:
 
 def send_to_firehose(records: list[dict], run_id: str) -> int:
     ingested_at = datetime.now(timezone.utc).isoformat()
+    ingestion_date = datetime.now(timezone.utc).date().isoformat()
 
     firehose_records = []
     for r in records:
         payload = {
             **r,
-            "dataset": "users",
+            "dataset": "bronze_users",
             "source": "faker_synthetic",
             "run_id": run_id,
             "ingested_at": ingested_at,
+            "ingestion_date": ingestion_date,
         }
         firehose_records.append({
             "Data": (json.dumps(payload) + "\n").encode("utf-8")
@@ -188,7 +190,7 @@ def lambda_handler(event, context):
 
     # send to Firehose
     sent = send_to_firehose(snapshots, run_id)
-    print(f"[users] sent {sent} records → dataset=users")
+    print(f"[users] sent {sent} records → dataset=bronze_users")
 
     return {
         "statusCode": 200,

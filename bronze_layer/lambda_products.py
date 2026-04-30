@@ -12,13 +12,25 @@ from shared_config import (
 )
 
 # Set this in Lambda environment variables
-REGION = os.environ['AWS_REGION']
+REGION = os.environ['REGION']
 STREAM_NAME = os.environ["FIREHOSE_STREAM_NAME"]
 
 firehose = boto3.client("firehose", region_name=REGION)
 
-# Catalogue builder (seed=42 — stable across all runs)
+def build_seller_catalogue():
+    rng = random.Random(CATALOGUE_SEED)
+    mapping = {cat: [] for cat in CATEGORY_NAMES}
+    for seller_id in range(1, 101):
+        cat = rng.choice(CATEGORY_NAMES)
+        mapping[cat].append(seller_id)
+    for cat, sellers in mapping.items():
+        if not sellers:
+            mapping[cat] = [rng.randint(1, 100)]
+    return mapping
 
+SELLER_CATALOGUE = build_seller_catalogue()
+
+# Catalogue builder (seed=42 — stable across all runs)
 def build_product_catalogue(fake) -> list[dict]:
     """
     Generates the full 500-product catalogue.
@@ -32,9 +44,12 @@ def build_product_catalogue(fake) -> list[dict]:
         subcategory = rng.choice(CATEGORIES[category])
         min_p, max_p = CATEGORY_PRICE_BANDS[category]
         base_price  = round(rng.uniform(min_p, max_p), 2)
+        seller_pool = SELLER_CATALOGUE.get(category, [1])
+        seller_id   = rng.choice(seller_pool)  # use catalogue rng not random — stable assignment
 
         products.append({
             "product_id": i,
+            "seller_id": seller_id,
             "sku": f"SKU-{i:05d}",
             "name": fake.catch_phrase(),
             "category": category,

@@ -16,10 +16,28 @@ from shared_config import (
 )
 
 # Set this in Lambda environment variables
-REGION = os.environ['AWS_REGION']
+REGION = os.environ['REGION']
 STREAM_NAME = os.environ["FIREHOSE_STREAM_NAME"]
 
 firehose = boto3.client("firehose", region_name=REGION)
+
+
+def build_seller_catalogue():
+    """Build mapping of category → seller_ids using same seed=42 as lambda_sellers."""
+    from shared_config import CATALOGUE_SEED
+    rng = random.Random(CATALOGUE_SEED)
+    mapping = {cat: [] for cat in CATEGORY_NAMES}
+    for seller_id in range(1, 101):
+        cat = rng.choice(CATEGORY_NAMES)
+        mapping[cat].append(seller_id)
+    # Ensure every category has at least one seller
+    for cat, sellers in mapping.items():
+        if not sellers:
+            mapping[cat] = [rng.randint(1, 100)]
+    return mapping
+ 
+SELLER_CATALOGUE = build_seller_catalogue()
+ 
 
 # Orders per run
 MIN_ORDERS = 150
@@ -79,8 +97,13 @@ def generate_line_items(num_items: int) -> tuple[list[dict], float, float]:
         line_gross = round(unit_price * quantity, 2)
         line_net = round(final_unit_price * quantity, 2)
 
+        # Assign seller from the category's seller pool
+        seller_pool = SELLER_CATALOGUE.get(category, [1])
+        seller_id   = random.choice(seller_pool)
+
         items.append({
             "product_id": product_id,
+            "seller_id": seller_id,
             "category": category,
             "subcategory": subcategory,
             "unit_price": unit_price,
@@ -94,7 +117,10 @@ def generate_line_items(num_items: int) -> tuple[list[dict], float, float]:
         gross_total += line_gross
         net_total += line_net
 
-    return items, round(gross_total, 2), round(net_total, 2)
+    # top_seller_id — seller with highest line_net_total in this order
+    top_seller_id = max(items, key=lambda x: x["line_net_total"])["seller_id"]
+
+    return items, round(gross_total, 2), round(net_total, 2), top_seller_id
 
 
 # Order builder
@@ -131,7 +157,7 @@ def generate_order(fake) -> dict:
 
     # Line items
     num_items = random.randint(1, 6)
-    items, gross, net = generate_line_items(num_items)
+    items, gross, net, top_seller_id = generate_line_items(num_items)
     shipping_lo, shipping_hi = SHIPPING_COST_RANGE[channel]
     shipping_cost = round(random.uniform(shipping_lo, shipping_hi), 2)
     tax_rate = round(random.uniform(0.05, 0.18), 3)
@@ -172,6 +198,7 @@ def generate_order(fake) -> dict:
         "top_category": top_category,
 
         # raw line items (preserved for Silver parsing)
+        "top_seller_id": top_seller_id,
         "products_json": json.dumps(items),
 
         # flags
