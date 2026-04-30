@@ -1,0 +1,46 @@
+version: 2
+
+sources:
+  - name: ecom_silver
+    database: awsdatacatalog
+    schema: ecom_silver
+    tables:
+      - name: silver_orders
+      - name: silver_products
+      - name: silver_users
+      - name: silver_fx_rates
+      - name: silver_weather
+      - name: silver_sellers
+
+models:
+  - name: dim_date
+    columns:
+      - name: date_sk
+        tests: [not_null, unique]
+
+  - name: dim_product
+    columns:
+      - name: product_sk
+        tests: [not_null, unique]
+
+  - name: dim_user
+    columns:
+      - name: user_sk
+        tests: [not_null, unique]
+
+  - name: dim_currency
+    columns:
+      - name: currency_sk
+        tests: [not_null, unique]
+
+  - name: fact_orders
+    columns:
+      - name: order_id
+        tests: [not_null, unique]
+      - name: order_total_usd
+        tests: [not_null]
+
+  - name: fact_daily_sales
+    columns:
+      - name: revenue_usd
+        tests: [not_null]

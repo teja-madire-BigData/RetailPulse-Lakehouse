@@ -1,0 +1,30 @@
+name: 'retailpulse_lakehouse'
+version: '1.0.0'
+config-version: 2
+
+profile: 'default'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  retailpulse_lakehouse:
+    +schema: ecom_gold
+    +materialized: table
+    +table_type: iceberg
+    +format: parquet
+    +s3_data_dir: s3://ecommerce-lakehouse-952409747471-ap-south-2-an/ecom_gold/
+    +s3_data_naming: table_unique
+    dims:
+      +tags: ["dim"]
+    facts:
+      +tags: ["fact"]
