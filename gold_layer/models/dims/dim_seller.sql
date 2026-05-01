@@ -1,5 +1,5 @@
 SELECT
-    seller_id                       AS seller_sk,
+    seller_id AS seller_sk,
     seller_id,
     seller_name,
     email,
@@ -21,7 +21,7 @@ SELECT
         WHEN fulfillment_score >= 85 THEN 'good'
         WHEN fulfillment_score >= 70 THEN 'average'
         ELSE 'poor'
-    END                             AS fulfillment_band,
+    END AS fulfillment_band,
 
     silver_processed_date
 
