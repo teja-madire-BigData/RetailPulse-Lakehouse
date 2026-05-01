@@ -11,8 +11,14 @@ SILVER_RUN_ID = str(uuid.uuid4())
 
 print("===== parsing arguments =====")
 parser = argparse.ArgumentParser()
-parser.add_argument("--partition_date", required=True, help="YYYY-MM-DD")
-parser.add_argument("--run_timestamp",   required=True, help="ISO timestamp from Airflow")
+parser.add_argument("--partition_date",   required=True, help="YYYY-MM-DD")
+parser.add_argument("--run_timestamp",    required=True, help="ISO timestamp from Airflow")
+parser.add_argument("--catalog",          required=True, help="Catalog name")
+parser.add_argument("--bronze_database",  required=True, help="Bronze database")
+parser.add_argument("--silver_database",  required=True, help="Silver database")
+parser.add_argument("--bronze_table",     required=True, help="Bronze table")
+parser.add_argument("--silver_table",     required=True, help="Silver table")
+
 args = parser.parse_args()
 PARTITION_DATE = args.partition_date
 SILVER_RUN_TIMESTAMP = args.run_timestamp
@@ -20,9 +26,11 @@ print("===== arguments parsed =====")
     
 # Table refs
 print("===== setup tables =====")
-CATALOG = "glue_catalog"
-BRONZE_TABLE = f"{CATALOG}.ecom_bronze.bronze_products"
-SILVER_TABLE = f"{CATALOG}.ecom_silver.silver_products"
+CATALOG = args.catalog  
+BRONZE_DB = args.bronze_database
+SILVER_DB = args.silver_database
+BRONZE_TABLE = f"{CATALOG}.{BRONZE_DB}.{args.bronze_table}"
+SILVER_TABLE = f"{CATALOG}.{SILVER_DB}.{args.silver_table}"
 
 print(f"===== BRONZE_TABLE={BRONZE_TABLE} =====")
 print(f"===== SILVER_TABLE={SILVER_TABLE} =====")

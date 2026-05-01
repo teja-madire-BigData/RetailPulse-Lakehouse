@@ -8,17 +8,25 @@ import silver_utils as u
 
 # arguments from airflow
 parser = argparse.ArgumentParser()
-parser.add_argument("--partition_date", required=True, help="YYYY-MM-DD")
-parser.add_argument("--run_timestamp",   required=True, help="ISO timestamp from Airflow")
+parser.add_argument("--partition_date",   required=True, help="YYYY-MM-DD")
+parser.add_argument("--run_timestamp",    required=True, help="ISO timestamp from Airflow")
+parser.add_argument("--catalog",          required=True, help="Catalog name")
+parser.add_argument("--bronze_database",  required=True, help="Bronze database")
+parser.add_argument("--silver_database",  required=True, help="Silver database")
+parser.add_argument("--bronze_table",     required=True, help="Bronze table")
+parser.add_argument("--silver_table",     required=True, help="Silver table")
 
 args = parser.parse_args()
 SILVER_RUN_ID = str(uuid.uuid4())
 PARTITION_DATE = args.partition_date
 SILVER_RUN_TIMESTAMP = args.run_timestamp
+
 # table references
-CATALOG = "glue_catalog"
-BRONZE_TABLE = f"{CATALOG}.ecom_bronze.bronze_fx_rates"
-SILVER_TABLE = f"{CATALOG}.ecom_silver.silver_fx_rates"
+CATALOG = args.catalog  
+BRONZE_DB = args.bronze_database
+SILVER_DB = args.silver_database
+BRONZE_TABLE = f"{CATALOG}.{BRONZE_DB}.{args.bronze_table}"
+SILVER_TABLE = f"{CATALOG}.{SILVER_DB}.{args.silver_table}"
 
 EXPECTED_PAIRS = 20
 REQUIRED_CURRENCIES = {"EUR", "GBP", "INR", "JPY", "AUD", "AED", "SGD"}

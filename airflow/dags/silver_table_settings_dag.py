@@ -17,61 +17,64 @@ SPARK_CONF = [
     "--conf", "spark.sql.catalog.glue_catalog.io-impl=org.apache.iceberg.aws.s3.S3FileIO",
 ]
 
+SILVER_TABLES = [
+    "silver_fx_rates",
+    "silver_orders",
+    "silver_products",
+    "silver_sellers",
+    "silver_users",
+    "silver_weather",
+]
+
 default_args = {
     "owner": "retailpulse",
-    "retries": 2,
+    "retries": 1,
     "retry_delay": timedelta(minutes=5),
     "email_on_failure": False,
 }
 
 with DAG(
-    dag_id = "silver_weather",
-    description = "Bronze to Silver: processing for weather",
-    schedule = "0 2 * * *",
-    start_date = pendulum.datetime(2026, 1, 1, tz="UTC"),
+    dag_id = "silver_table_settings",
+    description = "One-time: disable object-storage writes on all silver tables",
+    schedule = "@once",
+    start_date = pendulum.datetime(2026, 4, 30, tz="UTC"),
     catchup = False,
     default_args = default_args,
-    tags = ["silver", "weather"],
+    tags = ["silver", "one-time", "settings"],
 ) as dag:
 
-    PARTITION_DATE = "{{ (logical_date - macros.timedelta(days=1)).strftime('%Y-%m-%d') }}"
-
     add_step = EmrAddStepsOperator(
-        task_id = "add_silver_weather_step",
+        task_id = "add_table_settings_step",
         job_flow_id = CLUSTER_ID,
         aws_conn_id = "aws_default",
         steps = [{
-            "Name": "silver_weather",
+            "Name": "silver_table_settings",
             "ActionOnFailure": "CONTINUE",
             "HadoopJarStep": {
-                "Jar": "command-runner.jar",
+                "Jar":  "command-runner.jar",
                 "Args": [
                     "spark-submit",
                     "--deploy-mode", "cluster",
-                    "--py-files", f"{SCRIPTS_PATH}/silver_utils.py",
                 ] + SPARK_CONF + [
-                    f"{SCRIPTS_PATH}/silver_weather.py",
-                    "--partition_date", PARTITION_DATE,
-                    "--run_timestamp", "{{ logical_date.isoformat() }}",
+                    f"{SCRIPTS_PATH}/silver_table_settings.py",
                     "--catalog", "glue_catalog",
-                    "--bronze_database", "ecom_bronze",
-                    "--silver_database", "ecom_silver",
-                    "--bronze_table", "bronze_weather",
-                    "--silver_table", "silver_weather",
+                    "--database", "ecom_silver",
+                    "--tables", ",".join(SILVER_TABLES),
                 ],
             },
         }],
     )
 
     wait_step = EmrStepSensor(
-        task_id = "wait_silver_weather",
+        task_id = "wait_table_settings_step",
         job_flow_id = CLUSTER_ID,
-        step_id = "{{ task_instance.xcom_pull('add_silver_weather_step')[0] }}",
+        step_id = "{{ task_instance.xcom_pull('add_table_settings_step')[0] }}",
         aws_conn_id = "aws_default",
         poke_interval = 30,
-        timeout = 3600,
-        target_states = ["COMPLETED"],       
+        timeout = 1800,
+        target_states = ["COMPLETED"],
         failed_states = ["FAILED", "CANCELLED", "INTERRUPTED"],
     )
 
     add_step >> wait_step
+
