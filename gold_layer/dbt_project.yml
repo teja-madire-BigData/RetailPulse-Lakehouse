@@ -22,8 +22,6 @@ models:
     +materialized: table
     +table_type: iceberg
     +format: parquet
-    +s3_data_dir: s3://ecommerce-lakehouse-952409747471-ap-south-2-an/ecom_gold/
-    +s3_data_naming: table_unique
     dims:
       +tags: ["dim"]
     facts:
