@@ -1,8 +1,8 @@
 SELECT
-    product_id                                      AS product_sk,
+    product_id AS product_sk,
     product_id,
     sku,
-    name                                            AS product_name,
+    name AS product_name,
     category,
     subcategory,
     brand,
@@ -15,7 +15,7 @@ SELECT
         WHEN base_price < 100   THEN 'mid-range'
         WHEN base_price < 500   THEN 'premium'
         ELSE 'luxury'
-    END                                             AS price_band,
+    END AS price_band,
     is_active,
     discount_active,
     discount_pct,

@@ -38,13 +38,13 @@ currency_meta AS (
 )
 
 SELECT
-    cm.code                                         AS currency_sk,
+    cm.code  AS currency_sk,
     cm.code,
-    cm.name                                         AS currency_name,
+    cm.name AS currency_name,
     cm.region,
     cm.symbol,
-    COALESCE(lr.exchange_rate, 1.0)                 AS usd_exchange_rate,
-    lr.silver_processed_date                        AS rate_date
+    COALESCE(lr.exchange_rate, 1.0) AS usd_exchange_rate,
+    lr.silver_processed_date AS rate_date
 FROM currency_meta cm
 LEFT JOIN latest_rates lr
     ON cm.code = lr.target_currency

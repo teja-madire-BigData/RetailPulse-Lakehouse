@@ -1,5 +1,5 @@
 SELECT
-    user_id                                         AS user_sk,
+    user_id AS user_sk,
     user_id,
     first_name,
     last_name,
@@ -21,14 +21,14 @@ SELECT
         WHEN account_age_days < 365  THEN 'growing'
         WHEN account_age_days < 730  THEN 'established'
         ELSE 'loyal'
-    END                                             AS account_age_segment,
+    END AS account_age_segment,
 
     CASE
         WHEN lifetime_spend_usd < 100   THEN 'low'
         WHEN lifetime_spend_usd < 500   THEN 'medium'
         WHEN lifetime_spend_usd < 2000  THEN 'high'
         ELSE 'vip'
-    END                                             AS spend_segment,
+    END AS spend_segment,
     silver_processed_date
 
 FROM {{ source('ecom_silver', 'silver_users') }}
